@@ -1,6 +1,6 @@
-pip install streamlit
-pip install numpy
-pip install pandas
-pip install matplotlib
-pip install sklearn
-pip install keras
+streamlit
+numpy
+pandas
+matplotlib
+sklearn
+keras
