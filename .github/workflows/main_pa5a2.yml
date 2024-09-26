@@ -28,14 +28,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Archive project files
-      run: |
-        zip -r my-streamlit-app.zip .
+    - name: Build project
+      run: 'run.sh'
+      working-directory: './'
 
-    - name: Upload to Azure Web App
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: 'pa5a3-cccpczcec9gabfc3.northeurope-01'  # Remplacez par le nom de votre Web App Azure
-        slot-name: 'production'
-        publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}  # Le secret que vous avez ajouté
-        package: my-streamlit-app.zip
+      
