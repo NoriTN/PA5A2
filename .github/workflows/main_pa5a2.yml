@@ -30,7 +30,7 @@ jobs:
     - name: Upload to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: 'PA5A3'  # Remplacez par le nom de votre Web App Azure
+        app-name: 'pa5a3-cccpczcec9gabfc3.northeurope-01'  # Remplacez par le nom de votre Web App Azure
         slot-name: 'production'
         publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}  # Le secret que vous avez ajouté
         package: my-streamlit-app.zip
