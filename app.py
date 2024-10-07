@@ -25,6 +25,16 @@ def create_sequences(data, seq_length):
 st.title("Prédiction avec LSTM")
 
 # Chargement des données depuis une textbox
+
+st.title("Sélection d'une Valeur ou choisissez dans la liste")
+
+options = ["Bordeaux", "Rouen", "Caen", "Toulon"]
+
+selected_option = st.selectbox("Sélectionnez une option :", options)
+
+st.write(f"Vous avez sélectionné : {selected_option}")
+
+
 code_commune = st.text_area("Entrez le code INSEE voulu")
 
 # Paramètres
