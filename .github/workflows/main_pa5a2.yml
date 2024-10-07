@@ -37,5 +37,5 @@ jobs:
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: 'PA5A3'
+        app-name: 'PA5A4'
         startup-command: 'run.sh'
