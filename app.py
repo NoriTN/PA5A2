@@ -38,8 +38,8 @@ st.write(f"Vous avez sélectionné : {selected_option}")
 code_commune = st.text_area("Entrez le code INSEE voulu")
 
 # Paramètres
-sequence_length = st.slider("Taille de la séquence (jours)", min_value=10, max_value=100, value=25)
-epochs = st.slider("Nombre d'époques", min_value=10, max_value=200, value=25)
+sequence_length = 25 #st.slider("Taille de la séquence (jours)", min_value=10, max_value=100, value=25)
+epochs = 25 #st.slider("Nombre d'époques", min_value=10, max_value=200, value=25)
 
 if st.button("Valider les données"):
     datetoday = datetime.now()
