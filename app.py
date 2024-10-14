@@ -24,24 +24,41 @@ def create_sequences(data, seq_length):
 # Titre de l'application
 st.title("Prédiction avec LSTM")
 
+st.map()
+
 # Chargement des données depuis une textbox
 
-st.title("Sélection d'une Valeur ou choisissez dans la liste")
 
-options = ["Bordeaux", "Rouen", "Caen", "Toulon"]
+st.title("Sélection d'une valeur ou choisissez dans la liste")
+
+options = ["Faites votre choix", "Quintenic", "Saintes", "Congy", "Simacourbe"]
 
 selected_option = st.selectbox("Sélectionnez une option :", options)
 
-st.write(f"Vous avez sélectionné : {selected_option}")
 
+selected_option2 = st.text_area("Entrez le code INSEE voulu")
 
-code_commune = st.text_area("Entrez le code INSEE voulu")
+code_commune = "0"
+
+match selected_option :
+    case "Quintenic" :
+        code_commune = "22261"
+    case "Saintes" :
+        code_commune = "17415"
+    case "Congy" :
+        code_commune = "51163"
+    case "Simacourbe" :
+        code_commune = "64524"
+    case "Faites votre choix" :
+        code_commune = selected_option2
+
 
 # Paramètres
-sequence_length = 25 #st.slider("Taille de la séquence (jours)", min_value=10, max_value=100, value=25)
+sequence_length = 25 #st.slider("Taille de la séquence", min_value=10, max_value=100, value=25)
 epochs = 25 #st.slider("Nombre d'époques", min_value=10, max_value=200, value=25)
 
 if st.button("Valider les données"):
+    st.write("Code INSEE de la commune choisie : " + code_commune)
     datetoday = datetime.now()
     date_debut = datetoday - relativedelta(years=4)
     date_debut_str = date_debut.strftime("%Y-%m-%d")
@@ -50,66 +67,72 @@ if st.button("Valider les données"):
     # On trouve la bonne station en rapport avec le code INSEE
     request2 = 'https://hubeau.eaufrance.fr/api/v1/niveaux_nappes/stations?code_commune='+code_commune+'&date_recherche=2024-01-01&format=json&size=1'
 
+
+
     response2 = requests.get(request2)
     data2 = response2.json()
-    list_releves = data2.get('data', [])
-    df2 = pd.DataFrame(list_releves)
+    if data2.get('count') != 0 :
+        list_releves = data2.get('data', [])
+        df2 = pd.DataFrame(list_releves)
 
-    request = 'https://hubeau.eaufrance.fr/api/v1/niveaux_nappes/chroniques?code_bss='+df2['code_bss'][0]+'&date_debut_mesure='+date_debut_str
-    response = requests.get(request)
-    value = 0
-    nb_days = 1
-    values = []
-    if response.status_code == 200 or response.status_code == 206:
-        data = response.json()
-        chroniques = data.get('data', [])
-        df = pd.DataFrame(chroniques)
-        if 'profondeur_nappe' in df.columns and 'niveau_nappe_eau' in df.columns:
-            df['hauteur_eau'] = df['niveau_nappe_eau'] - df['profondeur_nappe']
-            moyenne_hauteur = round(df['hauteur_eau'].mean(), 2)
+
+        request = 'https://hubeau.eaufrance.fr/api/v1/niveaux_nappes/chroniques?code_bss='+df2['code_bss'][0]+'&date_debut_mesure='+date_debut_str
+        response = requests.get(request)
+        value = 0
+        nb_days = 1
+        values = []
+        if response.status_code == 200 or response.status_code == 206:
+            data = response.json()
+            chroniques = data.get('data', [])
+            df = pd.DataFrame(chroniques)
+            if 'profondeur_nappe' in df.columns and 'niveau_nappe_eau' in df.columns:
+                df['hauteur_eau'] = df['niveau_nappe_eau'] - df['profondeur_nappe']
+                moyenne_hauteur = round(df['hauteur_eau'].mean(), 2)
+            else:
+                print("Les colonnes nécessaires ne sont pas présentes dans les données.")
+            dffiltered = df[columns]
+            with st.spinner('Please wait... Calculating...'):
+                while value < moyenne_hauteur*0.9 :
+                    # Prétraitement : Normalisation des valeurs entre 0 et 1
+                    scaler = MinMaxScaler(feature_range=(0, 1))
+                    scaled_data = scaler.fit_transform(dffiltered['hauteur_eau'].values.reshape(-1, 1))
+
+
+
+                    # Création des séquences de données
+                    x_train, y_train = create_sequences(scaled_data, sequence_length)
+
+                    # Reshape pour correspondre à l'entrée LSTM (échantillons, séquence, caractéristiques)
+                    x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
+
+                    # Création du modèle LSTM
+                    model = Sequential()
+                    model.add(LSTM(units=50, return_sequences=True, input_shape=(x_train.shape[1], 1)))
+                    model.add(LSTM(units=50))
+                    model.add(Dense(units=1))  # Couche de sortie
+
+                    # Compilation du modèle
+                    model.compile(optimizer='adam', loss='mean_squared_error')
+
+                    model.fit(x_train, y_train, epochs=epochs, batch_size=64, verbose=2)
+
+                    # Prédiction sur les dernières séquences
+                    last_sequence = scaled_data[-sequence_length:]
+                    last_sequence = np.reshape(last_sequence, (1, sequence_length, 1))
+                    predicted_value = model.predict(last_sequence)
+
+                    # Transformation inverse pour obtenir la valeur prédite
+                    predicted_value = scaler.inverse_transform(predicted_value)
+
+                    value = predicted_value[0][0]
+                    st.write("Value : " + str(value))
+                    dffiltered.loc[len(dffiltered.index)] = [datetoday + relativedelta(days=nb_days), predicted_value[0][0]]
+                    st.write("90% de la hauteur moyenne : " + str(moyenne_hauteur*0.90))
+                    st.write(datetoday + relativedelta(days=nb_days))
+                    nb_days = nb_days + 1
+            st.success('Done!')
         else:
-            print("Les colonnes nécessaires ne sont pas présentes dans les données.")
-        dffiltered = df[columns]
-        with st.spinner('Please wait... Calculating...'):
-            while value < moyenne_hauteur*0.9 :
-                # Prétraitement : Normalisation des valeurs entre 0 et 1
-                scaler = MinMaxScaler(feature_range=(0, 1))
-                scaled_data = scaler.fit_transform(dffiltered['hauteur_eau'].values.reshape(-1, 1))
-
-
-
-                # Création des séquences de données
-                x_train, y_train = create_sequences(scaled_data, sequence_length)
-
-                # Reshape pour correspondre à l'entrée LSTM (échantillons, séquence, caractéristiques)
-                x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
-
-                # Création du modèle LSTM
-                model = Sequential()
-                model.add(LSTM(units=50, return_sequences=True, input_shape=(x_train.shape[1], 1)))
-                model.add(LSTM(units=50))
-                model.add(Dense(units=1))  # Couche de sortie
-
-                # Compilation du modèle
-                model.compile(optimizer='adam', loss='mean_squared_error')
-
-                model.fit(x_train, y_train, epochs=epochs, batch_size=64, verbose=2)
-
-                # Prédiction sur les dernières séquences
-                last_sequence = scaled_data[-sequence_length:]
-                last_sequence = np.reshape(last_sequence, (1, sequence_length, 1))
-                predicted_value = model.predict(last_sequence)
-
-                # Transformation inverse pour obtenir la valeur prédite
-                predicted_value = scaler.inverse_transform(predicted_value)
-
-                value = predicted_value[0][0]
-                st.write("Value : " + str(value))
-                dffiltered.loc[len(dffiltered.index)] = [datetoday + relativedelta(days=nb_days), predicted_value[0][0]]
-                st.write("90% de la hauteur moyenne : " + str(moyenne_hauteur*0.90))
-                st.write(datetoday + relativedelta(days=nb_days))
-                nb_days = nb_days + 1
-        st.success('Done!')
-    else:
-        print(f"Erreur {response.status_code} : {response.text}")
-    st.write("retour à la normale dans environ : " + str(nb_days) + " jours.")
+            print(f"Erreur {response.status_code} : {response.text}")
+        st.write("retour à la normale dans environ : " + str(nb_days) + " jours.")
+    else :
+        st.write("Le code INSEE rentré n'a pas de données suffisantes")
