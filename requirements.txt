@@ -6,3 +6,4 @@ keras
 requests
 folium
 pyodbc
+matplotlib
