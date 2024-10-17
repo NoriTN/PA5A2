@@ -1,6 +1,8 @@
 streamlit
 numpy
 pandas
-matplotlib
-sklearn
+scikit-learn
 keras
+requests
+folium
+pyodbc
