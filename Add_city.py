@@ -18,7 +18,7 @@ if __name__ == "__main__":
     date_debut = datetoday - relativedelta(years=4)
     date_debut_str = date_debut.strftime("%Y-%m-%d")
     columns = ['date_mesure', 'hauteur_eau']
-    source ='https://pa5a2.blob.core.windows.net/pa5a2blob/listes_stations_map_virgule.csv?sp=r&st=2024-10-12T09:26:22Z&se=2024-10-12T17:26:22Z&spr=https&sv=2022-11-02&sr=b&sig=MGLck3vVwLt8QZxxMTdjDUBWor1%2FnKXB9MP2VTYkjKw%3D'
+    source ='https://pa5a2.blob.core.windows.net/pa5a2blob/listes_stations_map_virgule_small.csv?sp=r&st=2024-10-16T10:09:07Z&se=2024-10-16T18:09:07Z&sip=37.66.176.140&spr=https&sv=2022-11-02&sr=b&sig=h0%2B5fKEJazhlfiHmM%2BK4QUJ4L0wpAJbkvbmvSMcUCaM%3D'
     df = pd.read_csv(source)
     dftest = pd.DataFrame(df)
     server = 'pa5a2sqlserver.database.windows.net'
@@ -27,6 +27,7 @@ if __name__ == "__main__":
     password = 'Password97'
     cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
     cursor = cnxn.cursor()
+    cursor.execute("TRUNCATE TABLE dbo.city")
     for index, row in dftest.iterrows():
         cursor.execute(
             "INSERT INTO dbo.City (date_debut_mesure, code_commune_insee, nom_commune, x, y, hauteur_moyenne, hauteur_actuelle) values(?,?,?,?,?,?,?)",
