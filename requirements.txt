@@ -7,3 +7,4 @@ requests
 folium
 pyodbc
 matplotlib
+streamlit-folium
