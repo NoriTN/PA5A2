@@ -8,4 +8,3 @@ folium
 pyodbc
 matplotlib
 streamlit-folium
-tensorflow
