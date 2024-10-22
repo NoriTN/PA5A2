@@ -121,7 +121,7 @@ if col1.button("Lancement de la prédiction"):
                         model.add(LSTM(units=int(settings['lstm2'].iloc[0])))
                         model.add(Dropout(0.2))
                         model.add(Dense(units=1))
-                        model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
+                        model.compile(optimizer='adam', loss='mean_squared_error')
                         model.fit(x_train, y_train, epochs=epochs, batch_size=32, verbose=2)
                         last_sequence = scaled_data[-sequence_length:]
                         last_sequence = np.reshape(last_sequence, (1, sequence_length, 1))
@@ -153,7 +153,7 @@ if col1.button("Lancement de la prédiction"):
             else :
                 st.write("La nappe est déjà au bon niveau !")
         else :
-            st.write("Le code INSEE rentré n'a pas de données suffisantes")
+            st.write("Le code INSEE rentré n'a pas de station de mesure")
     else :
         st.write("Veuillez renseigner un code INSEE.")
 
